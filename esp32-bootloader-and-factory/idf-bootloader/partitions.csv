@@ -1,0 +1,24 @@
+## NOTE: Apps size must be divisible by 64. Total Size: 4060k
+
+# Name,  Type,  SubType, Offset, Size, Flags
+
+nvs,     data,  nvs,     0x9000, 20K,
+otadata, data,  ota,     ,       8K,
+factory, app,   factory, ,       768K,
+ota_0,   app,   ota_0,   ,       1408K,
+ota_1,   app,   ota_1,   ,       1408K,
+spiffs,  data,  spiffs,  ,       448K,
+
+
+# The table below is output from compiling the partition table above.
+# It was put here so we can see the offsets but it's easier to adjust
+# the table above.
+
+# ESP-IDF Partition Table
+# Name,  Type,  SubType, Offset,   Size, Flags
+# nvs,data,nvs,0x9000,20K,
+# otadata,data,ota,0xe000,8K,
+# factory,app,factory,0x10000,768K,
+# ota_0,app,ota_0,0xd0000,1408K,
+# ota_1,app,ota_1,0x230000,1408K,
+# spiffs,data,spiffs,0x390000,448K,

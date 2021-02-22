@@ -1,0 +1,34 @@
+// AUTOMATICALLY GENERATED FILE. PLEASE DO NOT MODIFY IT MANUALLY
+
+// PIO Unified Debugger
+//
+// Documentation: https://docs.platformio.org/page/plus/debugging.html
+// Configuration: https://docs.platformio.org/page/projectconf/section_env_debug.html
+
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "platformio-debug",
+            "request": "launch",
+            "name": "PIO Debug",
+            "executable": "/Users/troygaylord/Documents/PlatformIO/Projects/BoilerplateESP32/esp32-bootloader-and-factory/.pio/build/nodemcu-32s/firmware.elf",
+            "projectEnvName": "nodemcu-32s",
+            "toolchainBinDir": "/Users/troygaylord/.platformio/packages/toolchain-xtensa32@2.50200.80/bin",
+            "preLaunchTask": {
+                "type": "PlatformIO",
+                "task": "Pre-Debug"
+            },
+            "internalConsoleOptions": "openOnSessionStart"
+        },
+        {
+            "type": "platformio-debug",
+            "request": "launch",
+            "name": "PIO Debug (skip Pre-Debug)",
+            "executable": "/Users/troygaylord/Documents/PlatformIO/Projects/BoilerplateESP32/esp32-bootloader-and-factory/.pio/build/nodemcu-32s/firmware.elf",
+            "projectEnvName": "nodemcu-32s",
+            "toolchainBinDir": "/Users/troygaylord/.platformio/packages/toolchain-xtensa32@2.50200.80/bin",
+            "internalConsoleOptions": "openOnSessionStart"
+        }
+    ]
+}

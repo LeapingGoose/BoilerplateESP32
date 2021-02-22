@@ -1,0 +1,9 @@
+{
+  "C_Cpp.intelliSenseEngineFallback": "Disabled",
+  "files.associations": {
+    "*.cpp": "cpp",
+    "*.h": "cpp",
+    "*.ino": "cpp",
+    "functional": "cpp"
+  }
+}

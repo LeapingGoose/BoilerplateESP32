@@ -1,0 +1,26 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../shared"
+		},
+		{
+			"path": "../../../../../.platformio"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"*.cpp": "cpp",
+			"*.h": "cpp",
+			"*.ino": "cpp",
+			"functional": "cpp",
+			"istream": "cpp",
+			"*.tcc": "cpp",
+			"*.tpp": "cpp",
+			"ratio": "cpp",
+			"__functional_03": "cpp"
+		}
+	}
+}
