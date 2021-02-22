@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <WiFiClient.h>
+// #include <ESPAsyncWebServer.h>
 #include <WebServer.h>
 #include <Update.h>
 #include "update-firmware-html.h"
@@ -18,7 +19,9 @@ void handleFileUpload();
 void handleFileDelete();
 void handleFileCreate();
 void handleFileList();
+String listFiles(bool ishtml);
 bool exists(String path);
+String humanReadableSize(const size_t bytes);
 
 void setup() {
   delay(1000);
@@ -175,35 +178,70 @@ void handleFileCreate() {
 }
 
 void handleFileList() {
-  if (!server.hasArg("dir")) {
-    server.send(500, "text/plain", "BAD ARGS");
-    return;
+  // if (!server.hasArg("dir")) {
+  //   server.send(500, "text/plain", "BAD ARGS");
+  //   return;
+  // }
+
+  server.send(200, "text/plain", listFiles(true));
+
+
+  // String path = server.arg("dir");
+  // Serial.println("handleFileList: " + path);
+
+  // File root = SPIFFS.open(path);
+  // path = String();
+
+  // String output = "[";
+
+  // if (root.isDirectory()){
+  //   File file = root.openNextFile();
+  //   while(file){
+  //     if (output != "[") {
+  //       output += ',';
+  //     }
+  //     output += "{\"type\":\"";
+  //     output += (file.isDirectory()) ? "dir" : "file";
+  //     output += "\",\"name\":\"";
+  //     output += String(file.name()).substring(1);
+  //     output += "\"}";
+  //     file = root.openNextFile();
+  //   }
+  // }
+  // output += "]";
+  // server.send(200, "text/json", output);
+}
+
+String listFiles(bool ishtml) {
+  String returnText = "";
+  File root = SPIFFS.open("/");
+  File foundfile = root.openNextFile();
+
+  if (ishtml) {
+    returnText += "<table><tr><th align='left'>Name</th><th align='left'>Size</th><th></th><th></th></tr>";
   }
 
-  String path = server.arg("dir");
-  Serial.println("handleFileList: " + path);
+  while (foundfile) {
 
+    if (ishtml) {
+      returnText += "<tr align='left'><td>" + String(foundfile.name()) + "</td><td>" + humanReadableSize(foundfile.size()) + "</td>";
+      // returnText += "<td><button onclick=\"downloadDeleteButton(\'" + String(foundfile.name()) + "\', \'download\')\">Download</button>";
+      returnText += "<td><button onclick=\"downloadDeleteButton(\'" + String(foundfile.name()) + "\', \'delete\')\">Delete</button></tr>";
 
-  File root = SPIFFS.open(path);
-  path = String();
+    } else {
+      returnText += "File: " + String(foundfile.name()) + " Size: " + humanReadableSize(foundfile.size()) + "\n";
+    }
 
-  String output = "[";
-  if(root.isDirectory()){
-      File file = root.openNextFile();
-      while(file){
-          if (output != "[") {
-            output += ',';
-          }
-          output += "{\"type\":\"";
-          output += (file.isDirectory()) ? "dir" : "file";
-          output += "\",\"name\":\"";
-          output += String(file.name()).substring(1);
-          output += "\"}";
-          file = root.openNextFile();
-      }
+    foundfile = root.openNextFile();
   }
-  output += "]";
-  server.send(200, "text/json", output);
+
+  if (ishtml) {
+    returnText += "</table>";
+  }
+
+  root.close();
+  foundfile.close();
+  return returnText;
 }
 
 bool exists(String path) {
@@ -214,4 +252,11 @@ bool exists(String path) {
   }
   file.close();
   return yes;
+}
+
+String humanReadableSize(const size_t bytes) {
+  if (bytes < 1024) return String(bytes) + " B";
+  else if (bytes < (1024 * 1024)) return String(bytes / 1024.0) + " KB";
+  else if (bytes < (1024 * 1024 * 1024)) return String(bytes / 1024.0 / 1024.0) + " MB";
+  else return String(bytes / 1024.0 / 1024.0 / 1024.0) + " GB";
 }

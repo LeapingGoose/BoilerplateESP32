@@ -166,6 +166,38 @@ namespace task_net {
       }
     }
 
+    String listFiles(bool ishtml) {
+      String returnText = "";
+      File root = SPIFFS.open("/");
+      File foundfile = root.openNextFile();
+
+      if (ishtml) {
+        returnText += "<table><tr><th align='left'>Name</th><th align='left'>Size</th><th></th><th></th></tr>";
+      }
+
+      while (foundfile) {
+
+        if (ishtml) {
+          returnText += "<tr align='left'><td>" + String(foundfile.name()) + "</td><td>" + humanReadableSize(foundfile.size()) + "</td>";
+          // returnText += "<td><button onclick=\"downloadDeleteButton(\'" + String(foundfile.name()) + "\', \'download\')\">Download</button>";
+          returnText += "<td><button onclick=\"downloadDeleteButton(\'" + String(foundfile.name()) + "\', \'delete\')\">Delete</button></tr>";
+
+        } else {
+          returnText += "File: " + String(foundfile.name()) + " Size: " + humanReadableSize(foundfile.size()) + "\n";
+        }
+
+        foundfile = root.openNextFile();
+      }
+
+      if (ishtml) {
+        returnText += "</table>";
+      }
+
+      root.close();
+      foundfile.close();
+      return returnText;
+    }
+    
     // Download file
     void on_file(AsyncWebServerRequest * request) {
       lg.trace(F("task_net::on_file(...): '%s'\n"), request->url().c_str());
@@ -426,38 +458,6 @@ namespace task_net {
         lg.trace(F("!!! Authentication failed.\n"));
       }
       return isAuthenticated;
-    }
-
-    String listFiles(bool ishtml) {
-      String returnText = "";
-      File root = SPIFFS.open("/");
-      File foundfile = root.openNextFile();
-
-      if (ishtml) {
-        returnText += "<table><tr><th align='left'>Name</th><th align='left'>Size</th><th></th><th></th></tr>";
-      }
-
-      while (foundfile) {
-
-        if (ishtml) {
-          returnText += "<tr align='left'><td>" + String(foundfile.name()) + "</td><td>" + humanReadableSize(foundfile.size()) + "</td>";
-          // returnText += "<td><button onclick=\"downloadDeleteButton(\'" + String(foundfile.name()) + "\', \'download\')\">Download</button>";
-          returnText += "<td><button onclick=\"downloadDeleteButton(\'" + String(foundfile.name()) + "\', \'delete\')\">Delete</button></tr>";
-
-        } else {
-          returnText += "File: " + String(foundfile.name()) + " Size: " + humanReadableSize(foundfile.size()) + "\n";
-        }
-
-        foundfile = root.openNextFile();
-      }
-
-      if (ishtml) {
-        returnText += "</table>";
-      }
-
-      root.close();
-      foundfile.close();
-      return returnText;
     }
 
     String humanReadableSize(const size_t bytes) {
