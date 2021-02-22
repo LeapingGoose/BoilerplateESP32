@@ -25,7 +25,7 @@ namespace task_net {
     /** WiFi */
     char _ipAddrTxt[16];
     IPAddress _ipAddr;
-    EzPzTimer _tmrWifiCheck;
+    // EzPzTimer _tmrWifiCheck;
     bool _hideServer;
     onNetStatusUpdateFn _onNetStatusUpdateCb;
     bool _apStarted                      = false;
@@ -105,7 +105,7 @@ namespace task_net {
       lg.trace(F("task_net::HTTP_GET: '%s'\n"), request->url().c_str());
 
       if (checkUserWebAuth(request)) {
-        request->send_P(200, "text/html", _admin, pageProcessor);
+        request->send_P(200, "text/html", _admin_html, pageProcessor);
       } else {
         return request->requestAuthentication();
       }
@@ -197,7 +197,7 @@ namespace task_net {
       foundfile.close();
       return returnText;
     }
-    
+
     // Download file
     void on_file(AsyncWebServerRequest * request) {
       lg.trace(F("task_net::on_file(...): '%s'\n"), request->url().c_str());
@@ -562,7 +562,7 @@ namespace task_net {
 
       setupWebServer();
 
-      _tmrWifiCheck.start(TMR_MS_WIFI_CHECK_SLOW);
+      // _tmrWifiCheck.start(TMR_MS_WIFI_CHECK_SLOW);
 
       _isInitialized = true;
     }
@@ -608,7 +608,7 @@ namespace task_net {
     WiFi.persistent(false);
     WiFi.disconnect();
     WiFi.mode(WIFI_OFF);
-    _tmrWifiCheck.expire();
+    // _tmrWifiCheck.expire();
     // Stop the web server
     _server.end();
 

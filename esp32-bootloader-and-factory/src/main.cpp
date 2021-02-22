@@ -3,25 +3,41 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <WiFiClient.h>
-// #include <ESPAsyncWebServer.h>
-#include <WebServer.h>
+#include <ESPAsyncWebServer.h>
+// #include <WebServer.h>
 #include <Update.h>
-#include "update-firmware-html.h"
+#include "webpages.h"
+// #include "update-firmware-html.h"
 
 // SSID and password of the AP (Access Point) server created on the ESP32.
 #define DEFAULT_BASE_AP_SSID     "WROOM-FACTORY"
 #define DEFAULT_BASE_AP_PASSWORD "wroomwroom"
+#define WIFI_CHANNEL             6
+#define FACTORY_FIRMWARE_VERSION "0.1"
+AsyncWebServer _server(80);
 
-WebServer server(80);
-File fsUploadFile;
-
-void handleFileUpload();
-void handleFileDelete();
-void handleFileCreate();
-void handleFileList();
-String listFiles(bool ishtml);
-bool exists(String path);
+void   initSpiffs();
+void   initWiFi();
+void   initWebServer();
+void   initRoutes();
+void   onWifiEvent(WiFiEvent_t event);
 String humanReadableSize(const size_t bytes);
+String pageProcessor(const String& var);
+String listFiles(bool ishtml);
+
+void onGet_root        (AsyncWebServerRequest *request);
+void on_fileUpload     (AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
+void onGet_listFiles   (AsyncWebServerRequest *request);
+void on_file           (AsyncWebServerRequest *request);
+void onGet_ota         (AsyncWebServerRequest *request);
+void onGet_otaSpiff    (AsyncWebServerRequest *request);
+void onPost_otaUpdate  (AsyncWebServerRequest *request);
+void onPost_otaUpdater (AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
+void onGet_reboot      (AsyncWebServerRequest *request);
+void onGet_logout      (AsyncWebServerRequest *request);
+void onGet_loggedOut   (AsyncWebServerRequest *request);
+void onGet_404         (AsyncWebServerRequest *request);
+
 
 void setup() {
   delay(1000);
@@ -29,187 +45,122 @@ void setup() {
   while (!Serial);
   delay(1000);
 
-  Serial.printf("\n\n\nStarting FACTORY App...\n\n");
-
-  WiFi.mode(WIFI_AP);
-  WiFi.softAP(DEFAULT_BASE_AP_SSID, DEFAULT_BASE_AP_PASSWORD);
-
-  Serial.printf("IP:        %s\n", WiFi.softAPIP().toString().c_str());
-  Serial.printf("WiFi Name: %s\n", DEFAULT_BASE_AP_SSID);
-  Serial.printf("WiFi Pwd:  %s\n\n", DEFAULT_BASE_AP_PASSWORD);
-
-  /** 
-   * HTTP: "/"
-   */
-  server.on("/", HTTP_GET, []() {
-    server.sendHeader("Connection", "close");
-    server.send_P(200, "text/html", _updateFirmwareHtml);
-  });
-
-  /** 
-   * HTTP: "/update-firmware"
-   * OTA Firmware Update
-   */
-  server.on("/update-firmware", HTTP_POST, []() {
-    server.sendHeader("Connection", "close");
-    server.send(200, "text/plain", (Update.hasError()) ? "FAIL" : "OK");
-    ESP.restart();
-  }, []() {
-
-    HTTPUpload& upload = server.upload();
-
-    if (upload.status == UPLOAD_FILE_START) {
-      Serial.printf("Update: %s\n", upload.filename.c_str());
-
-      if (!Update.begin(UPDATE_SIZE_UNKNOWN)) { //start with max available size
-        Update.printError(Serial);
-      }
-
-    } else if (upload.status == UPLOAD_FILE_WRITE) {
-
-      if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
-        Update.printError(Serial);
-      }
-
-    } else if (upload.status == UPLOAD_FILE_END) {
-
-      if (Update.end(true)) { //true to set the size to the current progress
-        Serial.printf("Update Success: %u\nRebooting...\n", upload.totalSize);
-      } else {
-        Update.printError(Serial);
-      }
-
-    }
-  });
-
-  server.on("/list", HTTP_GET, handleFileList);
-  //create file
-  server.on("/edit", HTTP_PUT, handleFileCreate);
-  //delete file
-  server.on("/edit", HTTP_DELETE, handleFileDelete);
-  //first callback is called after the request has ended with all parsed arguments
-  //second callback handles file uploads at that location
-  server.on("/edit", HTTP_POST, []() {
-    server.send(200, "text/plain", "");
-  }, handleFileUpload);
-
-  //called when the url is not defined here
-  //use it to load content from SPIFFS
-  server.onNotFound([]() {
-    // if (!handleFileRead(server.uri())) {
-    server.send(404, "text/plain", "404 Error - Not Found");
-    // }
-  });  
-
-  server.begin();
+  initSpiffs();
+  initWiFi();
+  initWebServer();
 }
-
 
 void loop(void) {
-  server.handleClient();
-  delay(1);
+  // _server.handleClient();
+  // delay(1);
 }
 
-void handleFileUpload() {
-  if (server.uri() != "/edit") {
-    return;
-  }
-  HTTPUpload& upload = server.upload();
-  if (upload.status == UPLOAD_FILE_START) {
-    String filename = upload.filename;
-    if (!filename.startsWith("/")) {
-      filename = "/" + filename;
-    }
-    Serial.print("handleFileUpload Name: ");
-    Serial.println(filename);
-
-    fsUploadFile = SPIFFS.open(filename, "w");
-    filename = String();
-  } else if (upload.status == UPLOAD_FILE_WRITE) {
-    //Serial.print("handleFileUpload Data: "); Serial.println(upload.currentSize);
-    if (fsUploadFile) {
-      fsUploadFile.write(upload.buf, upload.currentSize);
-    }
-  } else if (upload.status == UPLOAD_FILE_END) {
-    if (fsUploadFile) {
-      fsUploadFile.close();
-    }
-    Serial.print("handleFileUpload Size: "); Serial.println(upload.totalSize);
-  }
-}
-
-void handleFileDelete() {
-  if (server.args() == 0) {
-    return server.send(500, "text/plain", "BAD ARGS");
-  }
-  String path = server.arg(0);
-  Serial.println("handleFileDelete: " + path);
-  if (path == "/") {
-    return server.send(500, "text/plain", "BAD PATH");
-  }
-  if (!exists(path)) {
-    return server.send(404, "text/plain", "FileNotFound");
-  }
-  SPIFFS.remove(path);
-  server.send(200, "text/plain", "");
-  path = String();
-}
-
-void handleFileCreate() {
-  if (server.args() == 0) {
-    return server.send(500, "text/plain", "BAD ARGS");
-  }
-  String path = server.arg(0);
-  Serial.println("handleFileCreate: " + path);
-  if (path == "/") {
-    return server.send(500, "text/plain", "BAD PATH");
-  }
-  if (exists(path)) {
-    return server.send(500, "text/plain", "FILE EXISTS");
-  }
-  File file = SPIFFS.open(path, "w");
-  if (file) {
-    file.close();
+void initSpiffs() {
+  if (!SPIFFS.begin(true)) {
+    Serial.println("Cannot mount SPIFFS volume.");
   } else {
-    return server.send(500, "text/plain", "CREATE FAILED");
+    Serial.println("Mounted SPIFFS volume.");
   }
-  server.send(200, "text/plain", "");
-  path = String();
+}
+String humanReadableSize(const size_t bytes) {
+  if (bytes < 1024) return String(bytes) + " B";
+  else if (bytes < (1024 * 1024)) return String(bytes / 1024.0) + " KB";
+  else if (bytes < (1024 * 1024 * 1024)) return String(bytes / 1024.0 / 1024.0) + " MB";
+  else return String(bytes / 1024.0 / 1024.0 / 1024.0) + " GB";
 }
 
-void handleFileList() {
-  // if (!server.hasArg("dir")) {
-  //   server.send(500, "text/plain", "BAD ARGS");
-  //   return;
-  // }
+String pageProcessor(const String& var) {
+  if (var == "FIRMWARE") {
+    return FACTORY_FIRMWARE_VERSION;
+  }
 
-  server.send(200, "text/plain", listFiles(true));
+  if (var == "FREESPIFFS") {
+    return humanReadableSize((SPIFFS.totalBytes() - SPIFFS.usedBytes()));
+  }
 
+  if (var == "USEDSPIFFS") {
+    return humanReadableSize(SPIFFS.usedBytes());
+  }
 
-  // String path = server.arg("dir");
-  // Serial.println("handleFileList: " + path);
+  if (var == "TOTALSPIFFS") {
+    return humanReadableSize(SPIFFS.totalBytes());
+  }
 
-  // File root = SPIFFS.open(path);
-  // path = String();
+  if (var == "IP_AP") {
+    return WiFi.softAPIP().toString();
+  }
 
-  // String output = "[";
+  if (var == "IP_STA") {
+    return WiFi.localIP().toString();
+  }
+  return String();
+}
 
-  // if (root.isDirectory()){
-  //   File file = root.openNextFile();
-  //   while(file){
-  //     if (output != "[") {
-  //       output += ',';
-  //     }
-  //     output += "{\"type\":\"";
-  //     output += (file.isDirectory()) ? "dir" : "file";
-  //     output += "\",\"name\":\"";
-  //     output += String(file.name()).substring(1);
-  //     output += "\"}";
-  //     file = root.openNextFile();
-  //   }
-  // }
-  // output += "]";
-  // server.send(200, "text/json", output);
+void initWiFi() {
+  Serial.println("initWiFi()");
+
+  WiFi.mode(WIFI_AP_STA);
+  WiFi.softAP(DEFAULT_BASE_AP_SSID, DEFAULT_BASE_AP_PASSWORD, WIFI_CHANNEL, false);
+}
+
+void initWebServer() {
+  initRoutes();
+  _server.begin();
+}
+
+void initRoutes() {
+  _server.on("/",                HTTP_GET,  onGet_root);
+  _server.onFileUpload(                     on_fileUpload);
+  _server.on("/list-files",      HTTP_GET,  onGet_listFiles);
+  _server.on("/file",            HTTP_GET,  on_file);       // Download file
+  _server.on("/ota",             HTTP_GET,  onGet_ota);
+  _server.on("/ota-spiff",       HTTP_GET,  onGet_otaSpiff);
+  _server.on("/update-firmware", HTTP_POST, onPost_otaUpdate, onPost_otaUpdater);
+  _server.on("/reboot",          HTTP_GET,  onGet_reboot);
+  _server.on("/logout",          HTTP_GET,  onGet_logout);  // Indicate user is now logged out.
+  _server.on("/logged-out",      HTTP_GET,  onGet_loggedOut);  // Indicate user is now logged out.
+  _server.onNotFound(                       onGet_404);
+}
+
+/** Route Handlers */
+
+void onGet_root(AsyncWebServerRequest * request) {
+  Serial.println("task_net::HTTP_GET: '\'\n");
+  request->send_P(200, "text/html", _admin_html, pageProcessor);
+}
+
+void on_fileUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
+  Serial.println("task_net::onFileUpload(...)");
+  // String logmessage; // = "Client:" + request->client()->remoteIP().toString() + " " + request->url();
+  // Serial.println(logmessage);
+
+  if (!index) {
+    // logmessage = "Upload Start: " + String(filename);
+    // open the file on first call and store the file handle in the request object
+    request->_tempFile = SPIFFS.open("/" + filename, "w");
+    Serial.printf("Upload Start: %s\n", filename.c_str());
+  }
+
+  if (len) {
+    // stream the incoming chunk to the opened file
+    request->_tempFile.write(data, len);
+    // logmessage = "Writing file: " + String(filename) + " index=" + String(index) + " len=" + String(len);
+    // Serial.println(logmessage);
+  }
+
+  if (final) {
+    // logmessage = "Upload Complete: " + String(filename) + ",size: " + String(index + len);
+    // close the file handle as the upload is now done
+    request->_tempFile.close();
+    // Serial.println(logmessage);
+    Serial.println(F("Upload Complete."));
+    request->redirect("/");
+  }
+}
+
+void onGet_listFiles(AsyncWebServerRequest * request) {
+  Serial.println("task_net::HTTP_GET: '/list-files'");
+  request->send(200, "text/plain", listFiles(true));
 }
 
 String listFiles(bool ishtml) {
@@ -244,19 +195,154 @@ String listFiles(bool ishtml) {
   return returnText;
 }
 
-bool exists(String path) {
-  bool yes = false;
-  File file = SPIFFS.open(path, "r");
-  if(!file.isDirectory()){
-    yes = true;
+// Download file
+void on_file(AsyncWebServerRequest * request) {
+  Serial.println("task_net::HTTP_GET: '/file'");
+
+  if (request->hasParam("name") && request->hasParam("action")) {
+    const char *fileName = request->getParam("name")->value().c_str();
+    const char *fileAction = request->getParam("action")->value().c_str();
+
+    if (!SPIFFS.exists(fileName)) {
+      Serial.println("ERROR: SPIFFS file requested does not exist.");
+      request->send(400, "text/plain", "ERROR: file does not exist");
+    } else {
+
+      if (strcmp(fileAction, "download") == 0) {
+        Serial.println("task_net::on_file(...): Download");
+        request->send(SPIFFS, fileName, "application/octet-stream");
+
+      } else if (strcmp(fileAction, "delete") == 0) {
+        Serial.println("task_net::on_file(...): DELETE");
+        SPIFFS.remove(fileName);
+        request->send(200, "text/plain", "Deleted File: " + String(fileName));
+
+      } else {
+        request->send(400, "text/plain", "ERROR: Invalid action param supplied");
+      }
+    }
+  } else {
+    request->send(400, "text/plain", "ERROR: Name and action params required");
   }
-  file.close();
-  return yes;
 }
 
-String humanReadableSize(const size_t bytes) {
-  if (bytes < 1024) return String(bytes) + " B";
-  else if (bytes < (1024 * 1024)) return String(bytes / 1024.0) + " KB";
-  else if (bytes < (1024 * 1024 * 1024)) return String(bytes / 1024.0 / 1024.0) + " MB";
-  else return String(bytes / 1024.0 / 1024.0 / 1024.0) + " GB";
+void onGet_ota(AsyncWebServerRequest *request) {
+  Serial.println("onGet_ota(...)");
+  // request->send_P(200, "text/html", _otaFirmwareIndexHtml);
+}
+
+void onGet_otaSpiff(AsyncWebServerRequest *request) {
+  Serial.println("onGet_otaSpiff");
+  // request->send_P(200, "text/html", _otaFirmwareIndexHtml);
+}
+
+void onPost_otaUpdate(AsyncWebServerRequest *request) {
+   Serial.println("onPost_otaUpdate(...)");
+  // The request handler is triggered after the upload has finished... 
+  // Create the response, add header, and send response
+  // AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", Update.hasError() ? "FAIL" : "OK");
+  AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html",
+    Update.hasError() ? _ota_fail_html : _ota_success_html);
+
+  response->addHeader("Connection", "close");
+  response->addHeader("Access-Control-Allow-Origin", "*");
+  request->send(response);
+}
+
+void onPost_otaUpdater(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
+
+  // Upload handler chunks in data.
+  if (!index) {
+    Serial.printf("UploadStart: %s\n", filename.c_str());
+    // calculate sketch space required for the update
+    uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+    // _otaState = NET_JOB_STATUS::START;
+    // _onNetStatusUpdateCb(NET_JOB::OTA, _otaState);
+
+    // Start with max available size
+    if (!Update.begin(maxSketchSpace)) {
+      Update.printError(Serial);
+    }
+  }
+  
+  // Write chunked data to the free sketch space
+  if (Update.write(data, len) != len) {
+    Update.printError(Serial);
+  }
+
+  // If the final flag is set then this is the last frame of data
+  if (final) {
+    // True to set the size to the current progress
+    if (Update.end(true)) {
+      // _otaState = NET_JOB_STATUS::COMPLETE;
+      // _onNetStatusUpdateCb(NET_JOB::OTA, _otaState);
+      // _onNetStatusUpdateCb(NET_JOB::REBOOT, NET_JOB_STATUS::UNKNOWN);
+
+    } else {
+      // _otaState = NET_JOB_STATUS::ERROR;
+      Update.printError(Serial);
+      // _onNetStatusUpdateCb(NET_JOB::OTA, _otaState);
+    }
+  }
+}
+
+// void onPost_otaUpdater(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
+//   // Upload handler chunks in data.
+//   if (!index) {
+//     Serial.printf("UploadStart: %s\n", filename.c_str());
+//     // calculate sketch space required for the update
+//     uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+//     _otaState = NET_JOB_STATUS::START;
+//     _onNetStatusUpdateCb(NET_JOB::OTA, _otaState);
+
+//     // Start with max available size
+//     if (!Update.begin(maxSketchSpace)) {
+//       Update.printError(Serial);
+//     }
+//   }
+  
+//   // Write chunked data to the free sketch space
+//   if (Update.write(data, len) != len) {
+//     Update.printError(Serial);
+//   }
+
+//   // If the final flag is set then this is the last frame of data
+//   if (final) {
+//     // True to set the size to the current progress
+//     if (Update.end(true)) {
+//       _otaState = NET_JOB_STATUS::COMPLETE;
+//       _onNetStatusUpdateCb(NET_JOB::OTA, _otaState);
+//       _onNetStatusUpdateCb(NET_JOB::REBOOT, NET_JOB_STATUS::UNKNOWN);
+
+//     } else {
+//       _otaState = NET_JOB_STATUS::ERROR;
+//       Update.printError(Serial);
+//       _onNetStatusUpdateCb(NET_JOB::OTA, _otaState);
+//     }
+//   }
+// }
+
+void onGet_reboot(AsyncWebServerRequest * request) {
+  Serial.println("onGet_reboot(...)");
+
+  request->send(200, "text/html", reboot_html);
+  // _onNetStatusUpdateCb(NET_JOB::REBOOT, NET_JOB_STATUS::UNKNOWN);
+}
+
+void onGet_logout(AsyncWebServerRequest *request) {
+  Serial.println("onGet_logout(...)");
+  request->send(401);
+};
+
+void onGet_loggedOut(AsyncWebServerRequest * request) {
+  Serial.println("onGet_loggedOut(...)");
+  // String logmessage = "You are now logged out. Client:" + request->client()->remoteIP().toString() + " " + request->url();
+  // Serial.println(logmessage);
+  // request->send_P(401, "text/html", logout_html);
+  request->send_P(200, "text/html", logout_html);
+};
+
+void onGet_404(AsyncWebServerRequest *request) {
+  Serial.println("onGet_404(...)");
+  request->send(404, "text/plain", "404 Error - Page Not found");
 }

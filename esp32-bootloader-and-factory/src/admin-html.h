@@ -1,6 +1,6 @@
 #ifndef ADMIN_HTML_H
 #define ADMIN_HTML_H
-const char _admin[] PROGMEM = R"rawliteral(
+const char _admin_html[] PROGMEM = R"rawliteral(
 
 <!DOCTYPE HTML>
 <html lang="en">
