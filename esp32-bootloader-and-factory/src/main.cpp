@@ -1,19 +1,19 @@
+/**
+ * @todo Ensure datafile uploads will fit in available space (SPIFFS)
+ * @todo Ensure progress bar in datafile upload on web is accurate.
+ */
+
 #include <FS.h>
 #include <SPIFFS.h>
 #include <FS.h>
 #include <Arduino.h>
 #include <WiFi.h>
 #include <WiFiClient.h>
-// #include <ESPAsyncWebServer.h>
 #include <WebServer.h>
 #include <Update.h>
 #include "webpages.h"
-// #include "update-firmware-html.h"
 
-File _tempFile;
-//holds the current upload
 File fsUploadFile;
-// bool _reboot = false;
 
 // SSID and password of the AP (Access Point) server created on the ESP32.
 #define DEFAULT_BASE_AP_SSID     "WROOM-FACTORY"
@@ -49,7 +49,7 @@ void setup() {
   while (!Serial);
   delay(1000);
 
-  Serial.println("setup() 2");
+  Serial.println(F("setup()"));
 
   initSpiffs();
   initWiFi();
@@ -69,15 +69,15 @@ void loop() {
 
 void initSpiffs() {
   if (!SPIFFS.begin(true)) {
-    Serial.println("Cannot mount SPIFFS volume.");
+    Serial.println(F("Cannot mount SPIFFS volume."));
   } else {
-    Serial.println("Mounted SPIFFS volume.");
+    Serial.println(F("Mounted SPIFFS volume."));
   }
 }
 
 /** @todo Look into a better way than using 'String' to handle html templates and text replacement */
 String* processAdminHtml(String *page) {
-  Serial.println("processAdminHtml(...)");
+  Serial.println(F("processAdminHtml(...)"));
 
   page->replace("%FIRMWARE%", FACTORY_FIRMWARE_VERSION);
   page->replace("%FREESPIFFS%", humanReadableSize((SPIFFS.totalBytes() - SPIFFS.usedBytes())));
@@ -89,26 +89,26 @@ String* processAdminHtml(String *page) {
 }
 
 void initWiFi() {
-  Serial.println("initWiFi()");
+  Serial.println(F("initWiFi()"));
 
   WiFi.mode(WIFI_AP_STA);
   WiFi.softAP(DEFAULT_BASE_AP_SSID, DEFAULT_BASE_AP_PASSWORD, WIFI_CHANNEL, false);
 }
 
 void initWebServer() {
-  Serial.println("initWebServer()");
+  Serial.println(F("initWebServer()"));
 
   initRoutes();
   _server.begin();
 }
 
 void initRoutes() {
-  Serial.println("initRoutes()");
+  Serial.println(F("initRoutes()"));
 
   _server.on("/", HTTP_GET,  onGet_root);
 
   _server.on("/datafile", HTTP_POST, []() {
-    Serial.println("HTTP_POST: /");
+    Serial.println(F("HTTP_POST: /"));
     _server.send(200, "text/plain", "");
   }, handleFileUpload);
 
@@ -116,12 +116,12 @@ void initRoutes() {
 
   _server.on("/list-files",      HTTP_GET,  onGet_listFiles);
     _server.on("/update-firmware", HTTP_POST, []() {
-      Serial.println("/update-firmware (1)");
+      Serial.println(F("/update-firmware (1)"));
       _server.sendHeader("Connection", "close");
       _server.send(200, "text/plain", (Update.hasError()) ? "FAIL" : "OK");
       ESP.restart();
     }, []() {
-      Serial.println("/update-firmware (2)");
+      Serial.println(F("/update-firmware (2)"));
       HTTPUpload& upload = _server.upload();
       if (upload.status == UPLOAD_FILE_START) {
         Serial.setDebugOutput(true);
@@ -152,11 +152,11 @@ void initRoutes() {
 }
 
 void handleFileUpload() {
-  Serial.println("handleFileUpload()");
+  Serial.println(F("handleFileUpload()"));
 
   HTTPUpload& upload = _server.upload();
   if (upload.status == UPLOAD_FILE_START) {
-    Serial.println("UPLOAD_FILE_START");
+    Serial.println(F("UPLOAD_FILE_START"));
     String filename = upload.filename;
     if (!filename.startsWith("/")) {
       filename = "/" + filename;
@@ -166,16 +166,17 @@ void handleFileUpload() {
     fsUploadFile = SPIFFS.open(filename, "w");
     filename = String();
   } else if (upload.status == UPLOAD_FILE_WRITE) {
-    Serial.println("UPLOAD_FILE_WRITE");
+    Serial.println(F("UPLOAD_FILE_WRITE"));
     if (fsUploadFile) {
       fsUploadFile.write(upload.buf, upload.currentSize);
     }
   } else if (upload.status == UPLOAD_FILE_END) {
-    Serial.println("UPLOAD_FILE_END");
+    Serial.println(F("UPLOAD_FILE_END"));
     if (fsUploadFile) {
       fsUploadFile.close();
     }
-    Serial.print("handleFileUpload Size: "); Serial.println(upload.totalSize);
+    Serial.print(F("handleFileUpload Size: "));
+    Serial.println(upload.totalSize);
   }
 }
 
@@ -190,13 +191,14 @@ bool exists(String path){
 }
 
 void handleFileDelete() {
-  Serial.println("handleFileDelete()");
+  Serial.println(F("handleFileDelete()"));
 
   if (_server.args() == 0) {
     return _server.send(500, "text/plain", "BAD ARGS");
   }
   String path = _server.arg(0);
-  Serial.println("handleFileDelete: " + path);
+  Serial.print(F("handleFileDelete: "));
+  Serial.println(path);
   // if (path == "/") {
   //   return _server.send(500, "text/plain", "BAD PATH");
   // }
@@ -210,18 +212,18 @@ void handleFileDelete() {
 /** Route Handlers */
 
 void onGet_root() {
-  Serial.println("onGet_root()");
+  Serial.println(F("onGet_root()"));
   String adminPage = _admin_html;
   _server.send_P(200, "text/html", processAdminHtml(&adminPage)->c_str());
 }
 
 void onGet_listFiles() {
-  Serial.println("onGet_listFiles()");
+  Serial.println(F("onGet_listFiles()"));
   _server.send(200, "text/plain", listFiles(true));
 }
 
 String listFiles(bool ishtml) {
-  Serial.println("listFiles(...)");
+  Serial.println(F("listFiles(...)"));
   String returnText = "";
   File root = SPIFFS.open("/");
   File foundfile = root.openNextFile();
@@ -254,24 +256,25 @@ String listFiles(bool ishtml) {
 }
 
 void onGet_reboot() {
-  Serial.println("onGet_reboot(...)");
+  Serial.println(F("onGet_reboot(...)2"));
   _server.send(200, "text/html", reboot_html);
+  Serial.println(F("Rebooting..."));
   delay(2000);
   ESP.restart();
 }
 
 void onGet_logout() {
-  Serial.println("onGet_logout(...)");
+  Serial.println(F("onGet_logout(...)"));
   _server.send(401);
 };
 
 void onGet_loggedOut() {
-  Serial.println("onGet_loggedOut(...)");
+  Serial.println(F("onGet_loggedOut(...)"));
   _server.send_P(200, "text/html", logout_html);
 };
 
 void onGet_404() {
-  Serial.println("onGet_404(...)");
+  Serial.println(F("onGet_404(...)"));
   _server.send(404, "text/plain", "404 Error - Page Not found");
 }
 
