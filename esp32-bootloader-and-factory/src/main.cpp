@@ -49,7 +49,7 @@ void setup() {
   while (!Serial);
   delay(1000);
 
-  Serial.println("setup()");
+  Serial.println("setup() 2");
 
   initSpiffs();
   initWiFi();
@@ -157,10 +157,10 @@ void initRoutes() {
       }
     });
 
-  _server.on("/reboot",          HTTP_GET,  onGet_reboot);
-  _server.on("/logout",          HTTP_GET,  onGet_logout);  // Indicate user is now logged out.
-  _server.on("/logged-out",      HTTP_GET,  onGet_loggedOut);  // Indicate user is now logged out.
-  _server.onNotFound(                       onGet_404);
+  _server.on("/reboot",     HTTP_GET, onGet_reboot);
+  _server.on("/logout",     HTTP_GET, onGet_logout);  // Indicate user is now logged out.
+  _server.on("/logged-out", HTTP_GET, onGet_loggedOut);  // Indicate user is now logged out.
+  _server.onNotFound(                 onGet_404);
 }
 
 void handleFileUpload() {
