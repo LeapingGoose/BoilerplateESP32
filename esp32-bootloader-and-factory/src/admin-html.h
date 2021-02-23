@@ -27,7 +27,7 @@ const char _admin_html[] PROGMEM = R"rawliteral(
     font-size: 1.2em;
   }
   input {
-    width:95%%;
+    width:95%;
   }
   .container {
     display: block;
@@ -49,7 +49,7 @@ const char _admin_html[] PROGMEM = R"rawliteral(
     color:#fff;
     line-height:2.4rem;
     font-size:1rem;
-    width:100%%;
+    width:100%;
   }
   .sel {
     background-color:#0b3044;
@@ -98,7 +98,7 @@ const char _admin_html[] PROGMEM = R"rawliteral(
       margin: 0px;
     }
     .content {
-      width: 100%%;
+      width: 100%;
       padding-top: 20px;
     }
     body {
@@ -263,7 +263,7 @@ function progressHandler(event) {
   _("loaded_n_total").innerHTML = "Uploaded " + event.loaded + " bytes";
   var percent = (event.loaded / event.total) * 100;
   _("progressBar").value = Math.round(percent);
-  _("status").innerHTML = Math.round(percent) + "%% uploaded... please wait";
+  _("status").innerHTML = Math.round(percent) + "% uploaded... please wait";
   if (percent >= 100) {
     _("status").innerHTML = "Please wait, writing file to filesystem";
   }
