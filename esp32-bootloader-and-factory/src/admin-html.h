@@ -118,11 +118,11 @@ const char _admin_html[] PROGMEM = R"rawliteral(
 <body>
   <div class="container">
     <span style="float:right; font-size: .8em">v%FIRMWARE%</span>
-    <h1>Administration</h1>
+    <h1>Factory Administration</h1>
     <div class="nav">
       <button id="btnGeneral" onclick="showGeneralInfoForm()">General Info</button>
       <button id="btnUlFw" onclick="showUploadFirmwareForm()">Upload Firmware</button>
-      <button id="btnUlData" onclick="showUploadDataForm('Upload Files')">Upload Data File</button>
+      <button id="btnUlData" onclick="showUploadDataForm()">Upload Data File</button>
       <button id="btnList" onclick="showListForm()">List Data Files</button>
       <!-- <button onclick="logoutButton()">Logout</button> -->
       <button id="btnReboot" onclick="rebootButton()">Reboot</button>
@@ -198,10 +198,10 @@ function showListForm() {
 }
 
 function downloadDeleteButton(filename, action) {
-  var urltocall = "/file?name=" + filename + "&action=" + action;
+  var urltocall = "/datafile?name=" + filename + "&action=" + action;
   xmlhttp=new XMLHttpRequest();
   if (action == "delete") {
-    xmlhttp.open("GET", urltocall, false);
+    xmlhttp.open("DELETE", urltocall, false);
     xmlhttp.send();
     _("status").innerHTML = xmlhttp.responseText;
     xmlhttp.open("GET", "/list-files", false);
@@ -224,8 +224,6 @@ function showUploadDataForm() {
   _("details").innerHTML = _uploadDatapackForm;
 }
 
-// LEFT OFF HERE> Firmware isn't uploading. Need other firmware form.
-
 function showUploadFirmwareForm() {
   setCurrBtn("btnUlFw");
   _("detailsheader").innerHTML = "<h2>Upload Firmware</h2>"
@@ -242,7 +240,7 @@ function uploadFile() {
   ajax.addEventListener("load", completeHandler, false);
   ajax.addEventListener("error", errorHandler, false);
   ajax.addEventListener("abort", abortHandler, false);
-  ajax.open("POST", "/");
+  ajax.open("POST", "/datafile");
   ajax.send(formdata);
 }
 

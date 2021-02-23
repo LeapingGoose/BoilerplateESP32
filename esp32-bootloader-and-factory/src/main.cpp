@@ -13,6 +13,7 @@
 File _tempFile;
 //holds the current upload
 File fsUploadFile;
+// bool _reboot = false;
 
 // SSID and password of the AP (Access Point) server created on the ESP32.
 #define DEFAULT_BASE_AP_SSID     "WROOM-FACTORY"
@@ -39,7 +40,8 @@ void   onGet_loggedOut();
 void   onGet_404();
 
 void handleFileUpload();
-
+void handleFileDelete();
+bool exists(String path);
 
 void setup() {
   delay(1000);
@@ -54,8 +56,14 @@ void setup() {
   initWebServer();
 }
 
-void loop(void) {
+void loop() {
   _server.handleClient();
+  // if (_reboot == true) {
+  //   Serial.println(F("\n\n\n! Rebooting...\n\n\n"));
+  //   delay(2000);
+  //   ESP.restart();
+  //   return;    
+  // }
   delay(1);
 }
 
@@ -78,30 +86,6 @@ String* processAdminHtml(String *page) {
   page->replace("%IP_AP%", WiFi.softAPIP().toString());
   page->replace("%IP_STA%", WiFi.localIP().toString());
   return page;
-  // if (var == "FIRMWARE") {
-  //   return FACTORY_FIRMWARE_VERSION;
-  // }
-
-  // if (var == "FREESPIFFS") {
-  //   return humanReadableSize((SPIFFS.totalBytes() - SPIFFS.usedBytes()));
-  // }
-
-  // if (var == "USEDSPIFFS") {
-  //   return humanReadableSize(SPIFFS.usedBytes());
-  // }
-
-  // if (var == "TOTALSPIFFS") {
-  //   return humanReadableSize(SPIFFS.totalBytes());
-  // }
-
-  // if (var == "IP_AP") {
-  //   return WiFi.softAPIP().toString();
-  // }
-
-  // if (var == "IP_STA") {
-  //   return WiFi.localIP().toString();
-  // }
-  // return String();
 }
 
 void initWiFi() {
@@ -121,12 +105,14 @@ void initWebServer() {
 void initRoutes() {
   Serial.println("initRoutes()");
 
-  _server.on("/",                HTTP_GET,  onGet_root);
+  _server.on("/", HTTP_GET,  onGet_root);
 
-  _server.on("/", HTTP_POST, []() {
+  _server.on("/datafile", HTTP_POST, []() {
     Serial.println("HTTP_POST: /");
     _server.send(200, "text/plain", "");
   }, handleFileUpload);
+
+  _server.on("/datafile", HTTP_DELETE, handleFileDelete);
 
   _server.on("/list-files",      HTTP_GET,  onGet_listFiles);
     _server.on("/update-firmware", HTTP_POST, []() {
@@ -192,6 +178,35 @@ void handleFileUpload() {
     Serial.print("handleFileUpload Size: "); Serial.println(upload.totalSize);
   }
 }
+
+bool exists(String path){
+  bool yes = false;
+  File file = SPIFFS.open(path, "r");
+  if(!file.isDirectory()){
+    yes = true;
+  }
+  file.close();
+  return yes;
+}
+
+void handleFileDelete() {
+  Serial.println("handleFileDelete()");
+
+  if (_server.args() == 0) {
+    return _server.send(500, "text/plain", "BAD ARGS");
+  }
+  String path = _server.arg(0);
+  Serial.println("handleFileDelete: " + path);
+  // if (path == "/") {
+  //   return _server.send(500, "text/plain", "BAD PATH");
+  // }
+  if (!exists(path)) {
+    return _server.send(404, "text/plain", "FileNotFound");
+  }
+  SPIFFS.remove(path);
+  _server.send(200, "text/plain", "");
+  path = String();
+}
 /** Route Handlers */
 
 void onGet_root() {
@@ -206,6 +221,7 @@ void onGet_listFiles() {
 }
 
 String listFiles(bool ishtml) {
+  Serial.println("listFiles(...)");
   String returnText = "";
   File root = SPIFFS.open("/");
   File foundfile = root.openNextFile();
@@ -240,6 +256,8 @@ String listFiles(bool ishtml) {
 void onGet_reboot() {
   Serial.println("onGet_reboot(...)");
   _server.send(200, "text/html", reboot_html);
+  delay(2000);
+  ESP.restart();
 }
 
 void onGet_logout() {
