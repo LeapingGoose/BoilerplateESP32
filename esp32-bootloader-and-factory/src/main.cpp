@@ -27,7 +27,7 @@ void   initWiFi();
 void   initWebServer();
 void   initRoutes();
 String humanReadableSize(const size_t bytes);
-String pageProcessor(const String& var);
+String* processAdminHtml(const String& var);
 String listFiles(bool ishtml);
 void   onGet_root();
 void   on_fileUpload();
@@ -67,33 +67,41 @@ void initSpiffs() {
   }
 }
 
-String pageProcessor(const String& var) {
-  Serial.println("pageProcessor(...)");
+/** @todo Look into a better way than using 'String' to handle html templates and text replacement */
+String* processAdminHtml(String *page) {
+  Serial.println("processAdminHtml(...)");
 
-  if (var == "FIRMWARE") {
-    return FACTORY_FIRMWARE_VERSION;
-  }
+  page->replace("%FIRMWARE%", FACTORY_FIRMWARE_VERSION);
+  page->replace("%FREESPIFFS%", humanReadableSize((SPIFFS.totalBytes() - SPIFFS.usedBytes())));
+  page->replace("%USEDSPIFFS%", humanReadableSize(SPIFFS.usedBytes()));
+  page->replace("%TOTALSPIFFS%", humanReadableSize(SPIFFS.totalBytes()));
+  page->replace("%IP_AP%", WiFi.softAPIP().toString());
+  page->replace("%IP_STA%", WiFi.localIP().toString());
+  return page;
+  // if (var == "FIRMWARE") {
+  //   return FACTORY_FIRMWARE_VERSION;
+  // }
 
-  if (var == "FREESPIFFS") {
-    return humanReadableSize((SPIFFS.totalBytes() - SPIFFS.usedBytes()));
-  }
+  // if (var == "FREESPIFFS") {
+  //   return humanReadableSize((SPIFFS.totalBytes() - SPIFFS.usedBytes()));
+  // }
 
-  if (var == "USEDSPIFFS") {
-    return humanReadableSize(SPIFFS.usedBytes());
-  }
+  // if (var == "USEDSPIFFS") {
+  //   return humanReadableSize(SPIFFS.usedBytes());
+  // }
 
-  if (var == "TOTALSPIFFS") {
-    return humanReadableSize(SPIFFS.totalBytes());
-  }
+  // if (var == "TOTALSPIFFS") {
+  //   return humanReadableSize(SPIFFS.totalBytes());
+  // }
 
-  if (var == "IP_AP") {
-    return WiFi.softAPIP().toString();
-  }
+  // if (var == "IP_AP") {
+  //   return WiFi.softAPIP().toString();
+  // }
 
-  if (var == "IP_STA") {
-    return WiFi.localIP().toString();
-  }
-  return String();
+  // if (var == "IP_STA") {
+  //   return WiFi.localIP().toString();
+  // }
+  // return String();
 }
 
 void initWiFi() {
@@ -188,7 +196,8 @@ void handleFileUpload() {
 
 void onGet_root() {
   Serial.println("onGet_root()");
-  _server.send_P(200, "text/html", _admin_html);
+  String adminPage = _admin_html;
+  _server.send_P(200, "text/html", processAdminHtml(&adminPage)->c_str());
 }
 
 void onGet_listFiles() {

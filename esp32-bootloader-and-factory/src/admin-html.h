@@ -1,7 +1,7 @@
 #ifndef ADMIN_HTML_H
 #define ADMIN_HTML_H
+// String _admin_html = R"rawliteral(
 const char _admin_html[] PROGMEM = R"rawliteral(
-
 <!DOCTYPE HTML>
 <html lang="en">
 
