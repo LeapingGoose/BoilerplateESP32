@@ -1,7 +1,7 @@
 #ifndef TASK_NETWORK_H
 #define TASK_NETWORK_H
 
-#define FIRMWARE_VERSION "0.3"
+#define FIRMWARE_VERSION "0.4"
 
 #include <Arduino.h>
 #include <SPIFFS.h>

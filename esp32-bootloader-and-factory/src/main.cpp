@@ -1,6 +1,9 @@
 /**
  * @todo Ensure datafile uploads will fit in available space (SPIFFS)
  * @todo Ensure progress bar in datafile upload on web is accurate.
+ * @todo When "Upload Firmware" is complete, update the web page. Current stays at "Please wait, writing file to filesystem"
+ * @todo Update available space shown on the webpage after changing files.
+ * @todo Change cursor to finger-pointer when hovering over buttons on web page.
  */
 
 #include <FS.h>
@@ -12,6 +15,7 @@
 #include <WebServer.h>
 #include <Update.h>
 #include "webpages.h"
+#include "versions.h"
 
 File fsUploadFile;
 
@@ -19,7 +23,6 @@ File fsUploadFile;
 #define DEFAULT_BASE_AP_SSID     "WROOM-FACTORY"
 #define DEFAULT_BASE_AP_PASSWORD "wroomwroom"
 #define WIFI_CHANNEL             6
-#define FACTORY_FIRMWARE_VERSION "0.1"
 
 WebServer _server(80);
 
@@ -79,6 +82,7 @@ void initSpiffs() {
 String* processAdminHtml(String *page) {
   Serial.println(F("processAdminHtml(...)"));
 
+  page->replace("%BUILDNUM%", FACTORY_FIRMWARE_BUILD_NUM);
   page->replace("%FIRMWARE%", FACTORY_FIRMWARE_VERSION);
   page->replace("%FREESPIFFS%", humanReadableSize((SPIFFS.totalBytes() - SPIFFS.usedBytes())));
   page->replace("%USEDSPIFFS%", humanReadableSize(SPIFFS.usedBytes()));

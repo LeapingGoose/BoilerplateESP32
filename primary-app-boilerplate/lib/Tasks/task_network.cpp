@@ -68,6 +68,7 @@ namespace task_net {
 
     void setupRoutes            ();
     void onGet_root             (AsyncWebServerRequest *request);
+    void on_file                (AsyncWebServerRequest *request);
     void on_fileUpload          (AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
     void onGet_listFiles        (AsyncWebServerRequest *request);
     void onPost_firmwareUpdate  (AsyncWebServerRequest *request);
@@ -85,7 +86,7 @@ namespace task_net {
       _server.on("/",                HTTP_GET,  onGet_root);
       _server.onFileUpload(                     on_fileUpload);
       _server.on("/list-files",      HTTP_GET,  onGet_listFiles);
-      // _server.on("/file",            HTTP_GET,  on_file);       // Download file
+      _server.on("/file",            HTTP_GET,  on_file);       // Download file
       // _server.on("/ota",             HTTP_GET,  onGet_ota);
       // _server.on("/ota-spiff",       HTTP_GET,  onGet_otaSpiff);
       _server.on("/update-firmware", HTTP_POST, onPost_firmwareUpdate, onPost_firmwareUpdater);
@@ -175,7 +176,6 @@ namespace task_net {
 
         if (ishtml) {
           returnText += "<tr align='left'><td>" + String(foundfile.name()) + "</td><td>" + humanReadableSize(foundfile.size()) + "</td>";
-          // returnText += "<td><button onclick=\"downloadDeleteButton(\'" + String(foundfile.name()) + "\', \'download\')\">Download</button>";
           returnText += "<td><button onclick=\"downloadDeleteButton(\'" + String(foundfile.name()) + "\', \'delete\')\">Delete</button></tr>";
 
         } else {
@@ -195,40 +195,40 @@ namespace task_net {
     }
 
     // Download file
-    // void on_file(AsyncWebServerRequest * request) {
-    //   lg.trace(F("task_net::on_file(...): '%s'\n"), request->url().c_str());
+    void on_file(AsyncWebServerRequest * request) {
+      lg.trace(F("task_net::on_file(...): '%s'\n"), request->url().c_str());
 
-    //   if (checkUserWebAuth(request)) {
+      if (checkUserWebAuth(request)) {
 
-    //     if (request->hasParam("name") && request->hasParam("action")) {
-    //       const char *fileName = request->getParam("name")->value().c_str();
-    //       const char *fileAction = request->getParam("action")->value().c_str();
+        if (request->hasParam("name") && request->hasParam("action")) {
+          const char *fileName = request->getParam("name")->value().c_str();
+          const char *fileAction = request->getParam("action")->value().c_str();
 
-    //       if (!SPIFFS.exists(fileName)) {
-    //         lg.verbose(F("ERROR: SPIFFS file requested does not exist.\n"));
-    //         request->send(400, "text/plain", "ERROR: file does not exist");
-    //       } else {
+          if (!SPIFFS.exists(fileName)) {
+            lg.verbose(F("ERROR: SPIFFS file requested does not exist.\n"));
+            request->send(400, "text/plain", "ERROR: file does not exist");
+          } else {
 
-    //         if (strcmp(fileAction, "download") == 0) {
-    //           lg.trace(F("task_net::on_file(...): Download"));
-    //           request->send(SPIFFS, fileName, "application/octet-stream");
+            if (strcmp(fileAction, "download") == 0) {
+              lg.trace(F("task_net::on_file(...): Download"));
+              request->send(SPIFFS, fileName, "application/octet-stream");
 
-    //         } else if (strcmp(fileAction, "delete") == 0) {
-    //           lg.trace(F("task_net::on_file(...): DELETE"));
-    //           SPIFFS.remove(fileName);
-    //           request->send(200, "text/plain", "Deleted File: " + String(fileName));
+            } else if (strcmp(fileAction, "delete") == 0) {
+              lg.trace(F("task_net::on_file(...): DELETE"));
+              SPIFFS.remove(fileName);
+              request->send(200, "text/plain", "Deleted File: " + String(fileName));
 
-    //         } else {
-    //           request->send(400, "text/plain", "ERROR: Invalid action param supplied");
-    //         }
-    //       }
-    //     } else {
-    //       request->send(400, "text/plain", "ERROR: Name and action params required");
-    //     }
-    //   } else {
-    //     return request->requestAuthentication();
-    //   }
-    // }
+            } else {
+              request->send(400, "text/plain", "ERROR: Invalid action param supplied");
+            }
+          }
+        } else {
+          request->send(400, "text/plain", "ERROR: Name and action params required");
+        }
+      } else {
+        return request->requestAuthentication();
+      }
+    }
 
     // void onGet_ota(AsyncWebServerRequest *request) {
     //   lg.trace(F("task_net::HTTP_GET: '%s'\n"), request->url().c_str());

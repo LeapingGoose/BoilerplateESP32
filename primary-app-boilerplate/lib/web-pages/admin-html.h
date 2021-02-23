@@ -12,8 +12,8 @@ const char _admin_html[] PROGMEM = R"rawliteral(
 
 <style>
   body {
-    font-family:verdana; /* hello */
-    background-color: rgb(89 122 142);
+    font-family:verdana;
+    background-color: #597a8e;
     font-size: 1em;
   }
   .c {
@@ -143,7 +143,6 @@ var _uploadFirmwareForm =
   '<form id="upload_form" enctype="multipart/form-data" method="post">' +
   '  <input type="file" name="file1" id="file1" onchange="uploadFirmware()"><br>' +
   '  <progress id="progressBar" value="0" max="100" style="width:300px;"></progress>' +
-  '  <p id="loaded_n_total"></p>' +
   '</form>';
 
 var _uploadDatapackForm =
@@ -152,7 +151,6 @@ var _uploadDatapackForm =
   '<form id="upload_form" enctype="multipart/form-data" method="post">' +
   '<input type="file" name="file1" id="file1" onchange="uploadFile()"><br>' +
   '<progress id="progressBar" value="0" max="100" style="width:300px;"></progress>' +
-  '<p id="loaded_n_total"></p>' +
   '</form>';
 
 var _generalInfoForm =
@@ -239,7 +237,7 @@ function uploadFile() {
   formdata.append("file1", file);
   var ajax = new XMLHttpRequest();
   ajax.upload.addEventListener("progress", progressHandler, false);
-  ajax.addEventListener("load", completeHandler, false);
+  ajax.addEventListener("load", datafileUploadCompleteHandler, false);
   ajax.addEventListener("error", errorHandler, false);
   ajax.addEventListener("abort", abortHandler, false);
   ajax.open("POST", "/");
@@ -252,7 +250,7 @@ function uploadFirmware() {
   formdata.append("file1", file);
   var ajax = new XMLHttpRequest();
   ajax.upload.addEventListener("progress", progressHandler, false);
-  ajax.addEventListener("load", completeHandler, false);
+  ajax.addEventListener("load", firmwareUploadCompleteHandler, false);
   ajax.addEventListener("error", errorHandler, false);
   ajax.addEventListener("abort", abortHandler, false);
   ajax.open("POST", "/update-firmware");
@@ -260,7 +258,6 @@ function uploadFirmware() {
 }
 
 function progressHandler(event) {
-  _("loaded_n_total").innerHTML = "Uploaded " + event.loaded + " bytes";
   var percent = (event.loaded / event.total) * 100;
   _("progressBar").value = Math.round(percent);
   _("status").innerHTML = Math.round(percent) + "%% uploaded... please wait";
@@ -269,7 +266,12 @@ function progressHandler(event) {
   }
 }
 
-function completeHandler(event) {
+function firmwareUploadCompleteHandler(event) {
+  _("status").innerHTML = "Firmware Upload Complete";
+  _("progressBar").value = 0;
+}
+
+function datafileUploadCompleteHandler(event) {
   _("status").innerHTML = "Upload Complete";
   _("progressBar").value = 0;
   xmlhttp=new XMLHttpRequest();
