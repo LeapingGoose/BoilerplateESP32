@@ -66,20 +66,16 @@ namespace task_net {
 
     /** Prototypes */
 
-    void setupRoutes       ();
-    // void onPost_root       (AsyncWebServerRequest *request);
-    void onGet_root        (AsyncWebServerRequest *request);
-    void on_fileUpload     (AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
-    void onGet_listFiles   (AsyncWebServerRequest *request);
-    void on_file           (AsyncWebServerRequest *request);
-    void onGet_ota         (AsyncWebServerRequest *request);
-    void onGet_otaSpiff    (AsyncWebServerRequest *request);
-    void onPost_otaUpdate  (AsyncWebServerRequest *request);
-    void onPost_otaUpdater (AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
-    void onGet_reboot      (AsyncWebServerRequest *request);
-    void onGet_logout      (AsyncWebServerRequest *request);
-    void onGet_loggedOut   (AsyncWebServerRequest *request);
-    void onGet_404         (AsyncWebServerRequest *request);
+    void setupRoutes            ();
+    void onGet_root             (AsyncWebServerRequest *request);
+    void on_fileUpload          (AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
+    void onGet_listFiles        (AsyncWebServerRequest *request);
+    void onPost_firmwareUpdate  (AsyncWebServerRequest *request);
+    void onPost_firmwareUpdater (AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
+    void onGet_reboot           (AsyncWebServerRequest *request);
+    void onGet_logout           (AsyncWebServerRequest *request);
+    void onGet_loggedOut        (AsyncWebServerRequest *request);
+    void onGet_404              (AsyncWebServerRequest *request);
 
     /** Routing Calls */
 
@@ -89,10 +85,10 @@ namespace task_net {
       _server.on("/",                HTTP_GET,  onGet_root);
       _server.onFileUpload(                     on_fileUpload);
       _server.on("/list-files",      HTTP_GET,  onGet_listFiles);
-      _server.on("/file",            HTTP_GET,  on_file);       // Download file
-      _server.on("/ota",             HTTP_GET,  onGet_ota);
-      _server.on("/ota-spiff",       HTTP_GET,  onGet_otaSpiff);
-      _server.on("/update-firmware", HTTP_POST, onPost_otaUpdate, onPost_otaUpdater);
+      // _server.on("/file",            HTTP_GET,  on_file);       // Download file
+      // _server.on("/ota",             HTTP_GET,  onGet_ota);
+      // _server.on("/ota-spiff",       HTTP_GET,  onGet_otaSpiff);
+      _server.on("/update-firmware", HTTP_POST, onPost_firmwareUpdate, onPost_firmwareUpdater);
       _server.on("/reboot",          HTTP_GET,  onGet_reboot);
       _server.on("/logout",          HTTP_GET,  onGet_logout);  // Indicate user is now logged out.
       _server.on("/logged-out",      HTTP_GET,  onGet_loggedOut);  // Indicate user is now logged out.
@@ -199,52 +195,52 @@ namespace task_net {
     }
 
     // Download file
-    void on_file(AsyncWebServerRequest * request) {
-      lg.trace(F("task_net::on_file(...): '%s'\n"), request->url().c_str());
+    // void on_file(AsyncWebServerRequest * request) {
+    //   lg.trace(F("task_net::on_file(...): '%s'\n"), request->url().c_str());
 
-      if (checkUserWebAuth(request)) {
+    //   if (checkUserWebAuth(request)) {
 
-        if (request->hasParam("name") && request->hasParam("action")) {
-          const char *fileName = request->getParam("name")->value().c_str();
-          const char *fileAction = request->getParam("action")->value().c_str();
+    //     if (request->hasParam("name") && request->hasParam("action")) {
+    //       const char *fileName = request->getParam("name")->value().c_str();
+    //       const char *fileAction = request->getParam("action")->value().c_str();
 
-          if (!SPIFFS.exists(fileName)) {
-            lg.verbose(F("ERROR: SPIFFS file requested does not exist.\n"));
-            request->send(400, "text/plain", "ERROR: file does not exist");
-          } else {
+    //       if (!SPIFFS.exists(fileName)) {
+    //         lg.verbose(F("ERROR: SPIFFS file requested does not exist.\n"));
+    //         request->send(400, "text/plain", "ERROR: file does not exist");
+    //       } else {
 
-            if (strcmp(fileAction, "download") == 0) {
-              lg.trace(F("task_net::on_file(...): Download"));
-              request->send(SPIFFS, fileName, "application/octet-stream");
+    //         if (strcmp(fileAction, "download") == 0) {
+    //           lg.trace(F("task_net::on_file(...): Download"));
+    //           request->send(SPIFFS, fileName, "application/octet-stream");
 
-            } else if (strcmp(fileAction, "delete") == 0) {
-              lg.trace(F("task_net::on_file(...): DELETE"));
-              SPIFFS.remove(fileName);
-              request->send(200, "text/plain", "Deleted File: " + String(fileName));
+    //         } else if (strcmp(fileAction, "delete") == 0) {
+    //           lg.trace(F("task_net::on_file(...): DELETE"));
+    //           SPIFFS.remove(fileName);
+    //           request->send(200, "text/plain", "Deleted File: " + String(fileName));
 
-            } else {
-              request->send(400, "text/plain", "ERROR: Invalid action param supplied");
-            }
-          }
-        } else {
-          request->send(400, "text/plain", "ERROR: Name and action params required");
-        }
-      } else {
-        return request->requestAuthentication();
-      }
-    }
+    //         } else {
+    //           request->send(400, "text/plain", "ERROR: Invalid action param supplied");
+    //         }
+    //       }
+    //     } else {
+    //       request->send(400, "text/plain", "ERROR: Name and action params required");
+    //     }
+    //   } else {
+    //     return request->requestAuthentication();
+    //   }
+    // }
 
-    void onGet_ota(AsyncWebServerRequest *request) {
-      lg.trace(F("task_net::HTTP_GET: '%s'\n"), request->url().c_str());
-      // request->send_P(200, "text/html", _otaFirmwareIndexHtml);
-    }
+    // void onGet_ota(AsyncWebServerRequest *request) {
+    //   lg.trace(F("task_net::HTTP_GET: '%s'\n"), request->url().c_str());
+    //   // request->send_P(200, "text/html", _otaFirmwareIndexHtml);
+    // }
 
-    void onGet_otaSpiff(AsyncWebServerRequest *request) {
-      lg.trace(F("task_net::HTTP_GET: '%s'\n"), request->url().c_str());
-      // request->send_P(200, "text/html", _otaFirmwareIndexHtml);
-    }
+    // void onGet_otaSpiff(AsyncWebServerRequest *request) {
+    //   lg.trace(F("task_net::HTTP_GET: '%s'\n"), request->url().c_str());
+    //   // request->send_P(200, "text/html", _otaFirmwareIndexHtml);
+    // }
 
-    void onPost_otaUpdate(AsyncWebServerRequest *request) {
+    void onPost_firmwareUpdate(AsyncWebServerRequest *request) {
       lg.trace(F("task_net::HTTP_GET: '%s'\n"), request->url().c_str());
       // The request handler is triggered after the upload has finished... 
       // Create the response, add header, and send response
@@ -257,7 +253,7 @@ namespace task_net {
       request->send(response);
     }
 
-    void onPost_otaUpdater(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
+    void onPost_firmwareUpdater(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
 
       // Upload handler chunks in data.
       if (!index) {
@@ -294,7 +290,7 @@ namespace task_net {
       }
     }
 
-    // void onPost_otaUpdater(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
+    // void onPost_firmwareUpdater(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
     //   // Upload handler chunks in data.
     //   if (!index) {
     //     Serial.printf("UploadStart: %s\n", filename.c_str());
