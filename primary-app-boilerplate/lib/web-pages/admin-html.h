@@ -56,8 +56,10 @@ const char _admin_html[] PROGMEM = R"rawliteral(
   .sel {
     background-color:#0b3044;
   }
+  #detailsheader, #details, #status {
+    clear: both;
+  }
   #details {
-    float: left;
     text-align: left;
     min-width: 250px;
     font-size: .8em;
@@ -275,9 +277,9 @@ function firmwareUploadCompleteHandler(event) {
 function datafileUploadCompleteHandler(event) {
   _("status").innerHTML = "Upload Complete";
   _("progressBar").value = 0;
-  xmlhttp=new XMLHttpRequest();
-  xmlhttp.open("GET", "/list-files", false);
-  xmlhttp.send();
+  // xmlhttp=new XMLHttpRequest();
+  // xmlhttp.open("GET", "/list-files", false);
+  // xmlhttp.send();
   _("status").innerHTML = "File Uploaded";
   _("detailsheader").innerHTML = "<h2>Files</h2>";
   _("details").innerHTML = xmlhttp.responseText;

@@ -210,7 +210,7 @@ void handleFileDelete() {
     return _server.send(404, "text/plain", "FileNotFound");
   }
   SPIFFS.remove(path);
-  _server.send(200, "text/plain", "");
+  _server.send(200, "text/plain", "File deleted.");
   path = String();
 }
 /** Route Handlers */

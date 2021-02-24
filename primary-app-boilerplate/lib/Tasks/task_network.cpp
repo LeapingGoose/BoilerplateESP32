@@ -194,7 +194,7 @@ namespace task_net {
       return returnText;
     }
 
-    // Download file
+    // Download / Delete File.
     void on_file(AsyncWebServerRequest * request) {
       lg.trace(F("task_net::on_file(...): '%s'\n"), request->url().c_str());
 
