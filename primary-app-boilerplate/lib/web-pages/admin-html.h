@@ -51,6 +51,7 @@ const char _admin_html[] PROGMEM = R"rawliteral(
     line-height:2.4rem;
     font-size:1rem;
     width:100%%;
+    cursor: pointer;
   }
   .sel {
     background-color:#0b3044;
@@ -63,8 +64,11 @@ const char _admin_html[] PROGMEM = R"rawliteral(
     margin-top: 0;
   }
   #status {
-    color: #28960e;
-    font-size: .8em;
+    color: #000;
+    font-size: .9em;
+    font-weight: 600;
+    display: inline-block;
+    padding-top: 15px;
   }
   #progressBar{
     margin-top: 10px;
@@ -130,7 +134,6 @@ const char _admin_html[] PROGMEM = R"rawliteral(
     <div class="content">
       <div id="detailsheader"></div>
       <div id="details"></div>
-      <br>
       <div id="status"></div>
     </div>
   </div>
@@ -261,10 +264,9 @@ function progressHandler(event) {
   _("progressBar").value = Math.round(percent);
   _("status").innerHTML = Math.round(percent) + "%% uploaded...";
   if (percent >= 100) {
-    _("status").innerHTML = "Installing firmware...";
+    _("status").innerHTML = "Saving file...";
   }
 }
-
 function firmwareUploadCompleteHandler(event) {
   _("status").innerHTML = "The firmware update is complete!";
   _("progressBar").value = 0;
