@@ -1,1 +1,1 @@
-esp32-bootloader-and-factory/idf-bootloader/components/bootloader/subproject/components/* linguist-vendored
+*.php linguist-vendored
