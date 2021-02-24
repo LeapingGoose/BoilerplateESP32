@@ -1,2 +1,1 @@
-* linguist-vendored
-*.cpp linguist-vendored=false
+bootloader/components/bootloader/subproject/components/micro-ecc/micro-ecc/* linguist-vendored
