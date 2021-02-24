@@ -8,7 +8,7 @@
 
 # Name,  Type,  SubType, Offset, Size, Flags
 
-# nvs,     data,  nvs,     0x9000, 20K,
+nvs,     data,  nvs,     0x9000, 20K,
 otadata, data,  ota,     ,       8K,
 dummy,   data,  phy,     ,       768K,
 ota_0,   app,   ota_0,   ,       1408K,
