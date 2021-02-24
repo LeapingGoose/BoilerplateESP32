@@ -9,27 +9,10 @@
 # Name,  Type,  SubType, Offset, Size, Flags
 
 # nvs,     data,  nvs,     0x9000, 20K,
-# otadata, data,  ota,     ,       8K,
-# #factory, app,   factory, ,       768K,
-# dummy,   data,  phy,     ,       768K,
-# ota_0,   app,   ota_0,   ,       1408K,
-# ota_1,   app,   ota_1,   ,       1408K,
-# spiffs,  data,  spiffs,  ,       448K,
-
-# Name,   Type,   SubType, Offset,  Size, Flags
-# nvs,      data,   nvs,     0x9000,  20K,
-# otadata,  data,   ota,     ,        8K,
-# ota_0,    app,    ota_0,   ,        1600K,
-# ota_1,    app,    ota_1,   ,        1600K,
-# factory,  app,    0,       ,        384K,
-# spiffs,   data,   spiffs,  ,        448K,
-
-
-# Name,   Type,   SubType, Offset,  Size, Flags
-nvs,      data,   nvs,     0x9000,  20K,
-otadata,  data,   ota,     ,        8K,
-ota_0,    0,      ota_0,   ,        1792K,
-ota_1,    0,      ota_1,   ,        1792K,
-spiffs,   data,   spiffs,  ,        448K,
+otadata, data,  ota,     ,       8K,
+dummy,   data,  phy,     ,       768K,
+ota_0,   app,   ota_0,   ,       1408K,
+ota_1,   app,   ota_1,   ,       1408K,
+spiffs,  data,  spiffs,  ,       448K,
 
 # Total: 4060ks
