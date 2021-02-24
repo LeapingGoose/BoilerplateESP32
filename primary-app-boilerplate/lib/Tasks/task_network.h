@@ -1,8 +1,6 @@
 #ifndef TASK_NETWORK_H
 #define TASK_NETWORK_H
 
-#define FIRMWARE_VERSION "0.4"
-
 #include <Arduino.h>
 #include <SPIFFS.h>
 #include <ArduinoLog.h>
@@ -15,6 +13,7 @@
 #include <stdint.h>
 #include <Update.h>
 #include <ESPmDNS.h>
+#include "versions.h"
 
 enum ParseResult: uint8_t {
   PARSED_OK = 0,

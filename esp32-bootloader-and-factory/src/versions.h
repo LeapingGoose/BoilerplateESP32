@@ -1,0 +1,7 @@
+#ifndef VERSIONS_H
+#define VERSIONS_H
+
+#define FACTORY_FIRMWARE_VERSION    "0.11"
+#define FACTORY_FIRMWARE_BUILD_NUM  "1"
+
+#endif

@@ -1,20 +1,16 @@
-#ifndef ADMIN_HTML_H
-#define ADMIN_HTML_H
-const char _admin_html[] PROGMEM = R"rawliteral(
-
+<!-- RAW HTML. Used online compressor (https://htmlcompressor.com/compressor/) to minimize files -->
+<!-- and put the results in the raw literal in admin-html.h -->
 
 <!DOCTYPE HTML>
 <html lang="en">
-
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
   <meta charset="UTF-8">
 </head>
-
 <style>
   body {
     font-family:verdana;
-    background-color: #597a8e;
+    background-color: grey;
     font-size: 1em;
   }
   .c {
@@ -28,7 +24,7 @@ const char _admin_html[] PROGMEM = R"rawliteral(
     font-size: 1.2em;
   }
   input {
-    width:95%%;
+    width:95%;
   }
   .container {
     display: block;
@@ -46,14 +42,14 @@ const char _admin_html[] PROGMEM = R"rawliteral(
     border-width: 0;
     margin: 0 0 15px 0;
     border-radius: 0.3rem;
-    background-color:#1fa3ec;
+    background-color: #9a9a9a;
     color:#fff;
     line-height:2.4rem;
     font-size:1rem;
-    width:100%%;
+    width:100%;
   }
   .sel {
-    background-color:#0b3044;
+    background-color: #545353;
   }
   #details {
     float: left;
@@ -98,7 +94,7 @@ const char _admin_html[] PROGMEM = R"rawliteral(
       margin: 0px;
     }
     .content {
-      width: 100%%;
+      width: 100%;
       padding-top: 20px;
     }
     body {
@@ -117,14 +113,13 @@ const char _admin_html[] PROGMEM = R"rawliteral(
 
 <body>
   <div class="container">
-    <span style="float:right; font-size: .8em">v%FIRMWARE% (build %BUILDNUM%)</span>
-    <h1>Administration</h1>
+    <span style="float:right; font-size: .8em">v%FIRMWARE% (build# %BUILDNUM%)</span>
+    <h1>Factory Administration</h1>
     <div class="nav">
       <button id="btnGeneral" onclick="showGeneralInfoForm()">General Info</button>
       <button id="btnUlFw" onclick="showUploadFirmwareForm()">Upload Firmware</button>
-      <button id="btnUlData" onclick="showUploadDataForm('Upload Files')">Upload Data File</button>
+      <button id="btnUlData" onclick="showUploadDataForm()">Upload Data File</button>
       <button id="btnList" onclick="showListForm()">List Data Files</button>
-      <button onclick="logoutButton()">Logout</button>
       <button id="btnReboot" onclick="rebootButton()">Reboot</button>
     </div>
     <div class="content">
@@ -171,13 +166,6 @@ function setCurrBtn(btn) {
   _(btn).className = "sel";
 }
 
-function logoutButton() {
-  var xhr = new XMLHttpRequest();
-  xhr.open("GET", "/logout", true);
-  xhr.send();
-  setTimeout(function(){ window.open("/logged-out","_self"); }, 1000);
-}
-
 function rebootButton() {
   setCurrBtn("btnReboot");
   _("status").innerHTML = "Invoking Reboot ...";
@@ -197,10 +185,10 @@ function showListForm() {
 }
 
 function downloadDeleteButton(filename, action) {
-  var urltocall = "/file?name=" + filename + "&action=" + action;
+  var urltocall = "/datafile?name=" + filename + "&action=" + action;
   xmlhttp=new XMLHttpRequest();
   if (action == "delete") {
-    xmlhttp.open("GET", urltocall, false);
+    xmlhttp.open("DELETE", urltocall, false);
     xmlhttp.send();
     _("status").innerHTML = xmlhttp.responseText;
     xmlhttp.open("GET", "/list-files", false);
@@ -239,7 +227,7 @@ function uploadFile() {
   ajax.addEventListener("load", datafileUploadCompleteHandler, false);
   ajax.addEventListener("error", errorHandler, false);
   ajax.addEventListener("abort", abortHandler, false);
-  ajax.open("POST", "/");
+  ajax.open("POST", "/datafile");
   ajax.send(formdata);
 }
 
@@ -259,14 +247,14 @@ function uploadFirmware() {
 function progressHandler(event) {
   var percent = (event.loaded / event.total) * 100;
   _("progressBar").value = Math.round(percent);
-  _("status").innerHTML = Math.round(percent) + "%% uploaded...";
+  _("status").innerHTML = Math.round(percent) + "% uploaded... please wait";
   if (percent >= 100) {
-    _("status").innerHTML = "Installing firmware...";
+    _("status").innerHTML = "Writing file, please wait...";
   }
 }
 
 function firmwareUploadCompleteHandler(event) {
-  _("status").innerHTML = "The firmware update is complete!";
+  _("status").innerHTML = "Firmware Upload Complete";
   _("progressBar").value = 0;
 }
 
@@ -294,8 +282,3 @@ showGeneralInfoForm();
 </script>
 </body>
 </html>
-
-
-
-)rawliteral";
-#endif

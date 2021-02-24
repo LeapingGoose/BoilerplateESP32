@@ -464,8 +464,12 @@ namespace task_net {
     }
 
     String pageProcessor(const String& var) {
+      if (var == "BUILDNUM") {
+        return APP_FIRMWARE_BUILD_NUM;
+      }
+
       if (var == "FIRMWARE") {
-        return FIRMWARE_VERSION;
+        return APP_FIRMWARE_VERSION;
       }
 
       if (var == "FREESPIFFS") {
