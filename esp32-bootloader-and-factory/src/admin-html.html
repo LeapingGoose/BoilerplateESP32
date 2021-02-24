@@ -119,7 +119,7 @@
 
 <body>
   <div class="container">
-    <span style="float:right; font-size: .8em">v%FIRMWARE% (build# %BUILDNUM%)</span>
+    <span style="float:right; font-size: .8em">v%FIRMWARE% (build %BUILDNUM%)</span>
     <h1>Factory Administration</h1>
     <div class="nav">
       <button id="btnGeneral" onclick="showGeneralInfoForm()">General Info</button>
@@ -266,7 +266,7 @@ function firmwareUploadCompleteHandler(event) {
 function datafileUploadCompleteHandler(event) {
   _("status").innerHTML = "File upload is complete!";
   _("progressBar").value = 0;
-  _("status").innerHTML = event.res"File Uploaded";
+  _("status").innerHTML = "File Uploaded";
 }
 
 function errorHandler(event) {

@@ -17,7 +17,7 @@ const char _admin_html[] PROGMEM = R"rawliteral(
 <style>body{font-family:verdana;background-color:grey;font-size:1em}.c{text-align:center}td,th{padding:0 15px;font-weight:400}th{font-size:1.2em}input{width:95%}.container{display:block;float:left;min-width:260px;max-width:1024px;background-color:#fff;padding:50px;margin:40px}.content{float:left}button{border-width:0;margin:0 0 15px 0;border-radius:.3rem;background-color:#9a9a9a;color:#fff;line-height:2.4rem;font-size:1rem;width:100%;cursor:pointer}.sel{background-color:#545353}#detailsheader,#details,#status{clear:both}#details{text-align:left;min-width:250px;font-size:.8em;margin-top:0}#status{color:#000;font-size:.9em;font-weight:600;display:inline-block;padding-top:15px}#progressBar{margin-top:10px}h1,h2{padding:0 0 5px 0;margin-top:0;border-bottom:1px solid #ccc;font-size:1.4em;font-weight:400;margin-bottom:40px}h2{font-size:1.1em;margin-bottom:0}.q{float:right;width:64px;text-align:right}.nav{float:left;width:250px;padding:5px 15px 5px 5px}@media only screen and (max-width:750px){.container{padding:25px;margin:0}.content{width:100%;padding-top:20px}body{font-family:verdana;background-color:#fff;font-size:1em}h1,h2{margin-bottom:10px}button{margin:0 0 5px 0}}</style>
 <body>
 <div class=container>
-<span style=float:right;font-size:.8em>v%FIRMWARE% (build# %BUILDNUM%)</span>
+<span style=float:right;font-size:.8em>v%FIRMWARE% (build %BUILDNUM%)</span>
 <h1>Factory Administration</h1>
 <div class=nav>
 <button id=btnGeneral onclick=showGeneralInfoForm()>General Info</button>
